@@ -284,52 +284,44 @@ int8_t read_sim(uint8_t c){
 	sleep(1);
 	return tmp;
 }
+int waitms(unsigned int ms){
+	usleep(ms*1000);
+	return 0;
+}
 
 void initRoomba(){
-	int ret;
-	roombaCommand_t c;
+	int8_t ret;
 	roombaSensorData_t s;
 
-	c.command = ROOMBA_START;
-	c.size = 0;
+	roomba_command_init(&roomba_sendCommand, waitms);
 
-	ret = roomba_sendCommand(&c);
+	ret = roomba_start();
 
 	if(ret < 0){
 		fprintf(stderr, "Kann Start Kommando nicht senden ERROR: %d\n", ret);
 		exit(EXIT_FAILURE);
 	}
 
-	c.command = ROOMBA_SAFE;
-	c.size = 0;
+	ret = roomba_send(ROOMBA_SENSORS, 1, ROOMBA_SENSOR_OI_MODE);
 
-	ret = roomba_sendCommand(&c);
-	if(ret < 0){
-		fprintf(stderr, "Kann Safe Kommando nicht senden ERROR: %d\n", ret);
-		exit(EXIT_FAILURE);
-	}
-
-	c.command = ROOMBA_SENSORS;
-	c.size = 1;
-	c.data[0] = ROOMBA_SENSOR_OI_MODE;
-
-
-	ret = roomba_sendCommand(&c);
 	if(ret < 0){
 		fprintf(stderr, "Kann Sensor Kommando nicht senden ERROR: %d\n", ret);
 		exit(EXIT_FAILURE);
 	}
+	if(roomba_hasSensorData()){
+		ret = roomba_getSensorData(&s);
+		if(ret < 0){
+			fprintf(stderr, "Kann keine Senor Daten erreichen nicht senden ERROR: %d\n", ret);
+			exit(EXIT_FAILURE);
+		}
 
-	ret = roomba_getSensorData(&s);
-	if(ret < 0){
+		if(s.data != ROOMBA_SENSOR_OI_MODE_SAFE){
+			fprintf(stderr, "Roomba hat nicht in den Safe Mode gewechselt OI ID: %x\n", s.data);
+		}
+	}else{
 		fprintf(stderr, "Kann keine Senor Daten erreichen nicht senden ERROR: %d\n", ret);
 		exit(EXIT_FAILURE);
 	}
-
-	if(s.data != ROOMBA_SENSOR_OI_MODE_SAFE){
-		fprintf(stderr, "Roomba hat nicht in den Safe Mode gewechselt OI ID: %x\n", s.data);
-	}
-	printf("Init erflogreich OI Mode: %x\n", s.data);
 }
 void baud(){
 	int ret;
