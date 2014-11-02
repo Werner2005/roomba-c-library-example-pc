@@ -190,10 +190,9 @@ void rs232init(char* device){
 	 */
 	toptions.c_cc[VMIN]  = 1;
 	/*
-	 * Kein Timeout
-	 * Roomba Protokoll ist Asyncron
+	 * Setup Max Wait Time
 	 */
-	toptions.c_cc[VTIME] = 0;
+	toptions.c_cc[VTIME] = 1;
 	
 	/*
 	 * Schreibe Einstellungen nach tty
